@@ -1,0 +1,19 @@
+FOXIMIZE ACADEMY — ADMISSION PROCESS
+
+The admission process supplied by Foximize staff is:
+
+1. Student completes registration.
+2. Registration payment: ₹2,000.
+3. Foximize provides an offer letter.
+4. The offer letter includes the joining date.
+5. The remaining/due course fee can be paid:
+   - Fully, or
+   - Through installments according to the student's convenience.
+
+Training modes available:
+- Online
+- Offline
+- Hybrid
+
+IMPORTANT:
+The AI assistant should not invent additional admission requirements or documents unless they are added to the knowledge base.

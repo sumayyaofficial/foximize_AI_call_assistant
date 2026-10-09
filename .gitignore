@@ -1,0 +1,36 @@
+# Python virtual environments
+
+venv/
+.venv/
+env/
+
+# Python cache
+
+**pycache**/
+*.py[cod]
+
+# Environment variables and secrets
+
+.env
+.env.*
+
+# Generated audio and model files
+
+*.wav
+*.mp3
+*.m4a
+*.pt
+*.pth
+*.safetensors
+
+# Local databases and generated files
+
+data/chroma/
+data/cpu_test/
+data/mps_test/
+data/quality_test/
+
+# macOS and editor files
+
+.DS_Store
+.vscode/

@@ -1,0 +1,23 @@
+FOXIMIZE ACADEMY — COURSE INFORMATION
+
+The following course names, fees, and durations were supplied by Foximize staff for the AI assistant knowledge base.
+
+1. Data Science with Gen AI
+Fee: ₹55000
+Duration: 8 months
+
+2. Data Analytics with Gen AI
+Fee: ₹45000
+Duration: 6 months
+
+3. Python Full Stack with Gen AI
+Fee: ₹45000
+Duration: 6 months
+
+Training modes:
+- Online batches are available.
+- Offline batches are available.
+- Hybrid options are also available.
+
+IMPORTANT:
+Do not invent a course syllabus, class schedule, certification details, or other course benefits unless they are explicitly added to the knowledge base.

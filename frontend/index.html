@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Foximize AI Voice Assistant</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 650px;
+            background: white;
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #777;
+            margin-bottom: 30px;
+        }
+
+        #recordButton {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: none;
+            background: #111;
+            color: white;
+            font-size: 35px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        #recordButton.recording {
+            background: #d62828;
+            transform: scale(1.08);
+        }
+
+        #status {
+            margin: 20px 0;
+            color: #666;
+        }
+
+        .result {
+            text-align: left;
+            margin-top: 25px;
+            padding: 20px;
+            background: #f7f7f7;
+            border-radius: 12px;
+        }
+
+        .label {
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Foximize AI Voice Assistant</h1>
+
+    <div class="subtitle">
+        Ask anything about Foximize courses and programs
+    </div>
+
+    <button id="recordButton">🎙️</button>
+
+    <div id="status">
+        Click the microphone to start
+    </div>
+
+    <div class="result">
+
+        <div class="label">
+            You said:
+        </div>
+
+        <div id="transcription">
+            —
+        </div>
+
+        <br>
+
+        <div class="label">
+            AI Response:
+        </div>
+
+        <div id="response">
+            —
+        </div>
+
+        <audio id="audioPlayer" controls></audio>
+
+    </div>
+
+</div>
+
+<script>
+
+let mediaRecorder;
+let audioChunks = [];
+
+const recordButton = document.getElementById("recordButton");
+const status = document.getElementById("status");
+
+recordButton.addEventListener("click", async () => {
+
+    if (!mediaRecorder || mediaRecorder.state === "inactive") {
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true
+        });
+
+        mediaRecorder = new MediaRecorder(stream);
+
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = event => {
+            audioChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+
+            status.innerText = "Processing...";
+
+            const audioBlob = new Blob(audioChunks, {
+                type: "audio/webm"
+            });
+
+            const formData = new FormData();
+
+            formData.append(
+                "file",
+                audioBlob,
+                "voice.webm"
+            );
+
+            try {
+
+                const response = await fetch(
+                    "http://127.0.0.1:8000/voice-chat",
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+                const data = await response.json();
+
+                document.getElementById(
+                    "transcription"
+                ).innerText = data.transcribed_text;
+
+                document.getElementById(
+                    "response"
+                ).innerText = data.response;
+
+                const audioPlayer =
+                    document.getElementById("audioPlayer");
+
+                audioPlayer.src =
+                    "http://127.0.0.1:8000" +
+                    data.audio_url;
+
+                audioPlayer.play();
+
+                status.innerText = "Done";
+
+            } catch (error) {
+
+                console.error(error);
+
+                status.innerText =
+                    "Something went wrong.";
+
+            }
+        };
+
+        mediaRecorder.start();
+
+        recordButton.classList.add("recording");
+
+        recordButton.innerText = "⏹️";
+
+        status.innerText = "Listening...";
+
+    } else {
+
+        mediaRecorder.stop();
+
+        recordButton.classList.remove("recording");
+
+        recordButton.innerText = "🎙️";
+
+        status.innerText = "Processing...";
+
+    }
+
+});
+
+</script>
+
+</body>
+</html>
