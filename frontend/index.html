@@ -89,13 +89,18 @@
     <h1>Foximize AI Voice Assistant</h1>
 
     <div class="subtitle">
-        Ask anything about Foximize courses and programs
+        Ask anything about Foximize courses, fees, and programs
     </div>
 
     <button id="recordButton">🎙️</button>
 
     <div id="status">
-        Click the microphone to start
+        Click the microphone to start voice chat
+    </div>
+
+    <div style="margin: 20px 0; display: flex; gap: 8px;">
+        <input id="textInput" type="text" placeholder="Or type your question here..." style="flex: 1; padding: 10px 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px;">
+        <button id="sendTextButton" style="padding: 10px 18px; background: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Send</button>
     </div>
 
     <div class="result">
@@ -118,7 +123,9 @@
             —
         </div>
 
-        <audio id="audioPlayer" controls></audio>
+        <div id="sources" style="margin-top: 10px; font-size: 12px; color: #888;"></div>
+
+        <audio id="audioPlayer" controls style="display: none;"></audio>
 
     </div>
 
@@ -131,100 +138,136 @@ let audioChunks = [];
 
 const recordButton = document.getElementById("recordButton");
 const status = document.getElementById("status");
+const textInput = document.getElementById("textInput");
+const sendTextButton = document.getElementById("sendTextButton");
+const transcriptionElem = document.getElementById("transcription");
+const responseElem = document.getElementById("response");
+const sourcesElem = document.getElementById("sources");
+const audioPlayer = document.getElementById("audioPlayer");
 
+// Text chat handler
+sendTextButton.addEventListener("click", async () => {
+    const message = textInput.value.trim();
+    if (!message) return;
+
+    transcriptionElem.innerText = message;
+    responseElem.innerText = "Thinking...";
+    sourcesElem.innerText = "";
+    status.innerText = "Processing text query...";
+    sendTextButton.disabled = true;
+
+    try {
+        const response = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: message })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Server returned status ${response.status}`);
+        }
+
+        const data = await response.json();
+        responseElem.innerText = data.response;
+        if (data.sources && data.sources.length) {
+            sourcesElem.innerText = "Sources: " + data.sources.join(", ");
+        }
+        status.innerText = "Done";
+        textInput.value = "";
+    } catch (err) {
+        console.error(err);
+        responseElem.innerText = "Error: Unable to process request.";
+        status.innerText = "Failed";
+    } finally {
+        sendTextButton.disabled = false;
+    }
+});
+
+textInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        sendTextButton.click();
+    }
+});
+
+// Voice recording handler
 recordButton.addEventListener("click", async () => {
 
     if (!mediaRecorder || mediaRecorder.state === "inactive") {
 
-        const stream = await navigator.mediaDevices.getUserMedia({
-            audio: true
-        });
-
-        mediaRecorder = new MediaRecorder(stream);
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+        } catch (err) {
+            status.innerText = "Microphone access denied or unavailable.";
+            return;
+        }
 
         audioChunks = [];
 
         mediaRecorder.ondataavailable = event => {
-            audioChunks.push(event.data);
+            if (event.data.size > 0) {
+                audioChunks.push(event.data);
+            }
         };
 
         mediaRecorder.onstop = async () => {
-
-            status.innerText = "Processing...";
+            status.innerText = "Processing voice query...";
+            recordButton.disabled = true;
 
             const audioBlob = new Blob(audioChunks, {
                 type: "audio/webm"
             });
 
             const formData = new FormData();
-
-            formData.append(
-                "file",
-                audioBlob,
-                "voice.webm"
-            );
+            formData.append("file", audioBlob, "voice.webm");
 
             try {
+                const response = await fetch("/voice-chat", {
+                    method: "POST",
+                    body: formData
+                });
 
-                const response = await fetch(
-                    "http://127.0.0.1:8000/voice-chat",
-                    {
-                        method: "POST",
-                        body: formData
-                    }
-                );
+                if (!response.ok) {
+                    throw new Error(`Server responded with status ${response.status}`);
+                }
 
                 const data = await response.json();
 
-                document.getElementById(
-                    "transcription"
-                ).innerText = data.transcribed_text;
+                transcriptionElem.innerText = data.transcribed_text || "(empty)";
+                responseElem.innerText = data.response;
 
-                document.getElementById(
-                    "response"
-                ).innerText = data.response;
+                if (data.sources && data.sources.length) {
+                    sourcesElem.innerText = "Sources: " + data.sources.join(", ");
+                }
 
-                const audioPlayer =
-                    document.getElementById("audioPlayer");
-
-                audioPlayer.src =
-                    "http://127.0.0.1:8000" +
-                    data.audio_url;
-
-                audioPlayer.play();
+                if (data.audio_url) {
+                    audioPlayer.src = data.audio_url;
+                    audioPlayer.style.display = "block";
+                    audioPlayer.play().catch(e => console.log("Auto-play prevented:", e));
+                }
 
                 status.innerText = "Done";
 
             } catch (error) {
-
                 console.error(error);
-
-                status.innerText =
-                    "Something went wrong.";
-
+                status.innerText = "Something went wrong. Please try again.";
+                responseElem.innerText = "Unable to process voice request.";
+            } finally {
+                recordButton.disabled = false;
             }
         };
 
         mediaRecorder.start();
-
         recordButton.classList.add("recording");
-
         recordButton.innerText = "⏹️";
-
-        status.innerText = "Listening...";
+        status.innerText = "Listening... Click again to stop";
 
     } else {
-
         mediaRecorder.stop();
-
         recordButton.classList.remove("recording");
-
         recordButton.innerText = "🎙️";
-
         status.innerText = "Processing...";
-
     }
-
 });
 
 </script>

@@ -11,7 +11,7 @@ Fee: ₹45000
 Duration: 6 months
 
 3. Python Full Stack with Gen AI
-Fee: ₹45000
+Fee: ₹40000
 Duration: 6 months
 
 Training modes:

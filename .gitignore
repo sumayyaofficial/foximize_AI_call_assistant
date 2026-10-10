@@ -6,7 +6,7 @@ env/
 
 # Python cache
 
-**pycache**/
+__pycache__/
 *.py[cod]
 
 # Environment variables and secrets

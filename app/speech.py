@@ -1,23 +1,12 @@
-from faster_whisper import WhisperModel
+"""
+Speech-to-text module.
+Delegates to app.stt to avoid duplicate Whisper models in memory.
+"""
+from pathlib import Path
 
+try:
+    from app.stt import transcribe_audio, get_whisper_model, model
+except ImportError:
+    from stt import transcribe_audio, get_whisper_model, model
 
-model = WhisperModel(
-    "small",
-    device="cpu",
-    compute_type="int8"
-)
-
-
-def transcribe_audio(audio_file):
-
-    segments, info = model.transcribe(
-        audio_file,
-        beam_size=5
-    )
-
-    text = ""
-
-    for segment in segments:
-        text += segment.text
-
-    return text.strip()
+__all__ = ["transcribe_audio", "model", "get_whisper_model"]
